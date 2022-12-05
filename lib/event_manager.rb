@@ -24,24 +24,36 @@ end
 
 def hour_from_registration_date(date)
   date_array = date.split
-  hour = Time.parse(date_array[1]).hour
+  Time.parse(date_array[1]).hour
 end
 
-def best_hour_for_ads(hour_array)
+def day_from_registration_date(date)
+  date_array = date.split
+  Date.strptime(date_array[0], '%m/%d/%y').wday
+end
+
+def wday_name_from_number(number_array)
+  number_array.each_index do |index|
+    p number_array[index]
+    number_array[index] = Date::DAYNAMES[number_array[index]]
+  end
+end
+
+def best_time_for_ads(time_array)
   overview = Hash.new(0)
-  hour_array.each do |hour|
-    overview[hour] += 1
+  time_array.each do |time|
+    overview[time] += 1
   end
-  best_hour = []
-  same_hour_array = []
+  best_time = []
+  same_time_array = []
   overview.each_value do |number|
-    same_hour_array.push(number)
+    same_time_array.push(number)
   end
-  while overview.key(same_hour_array.max)
-    best_hour.push(overview.key(same_hour_array.max))
-    overview.delete(overview.key(same_hour_array.max))
+  while overview.key(same_time_array.max)
+    best_time.push(overview.key(same_time_array.max))
+    overview.delete(overview.key(same_time_array.max))
   end
-  puts "Best hours for running-ads : #{best_hour.join(', ')}h."
+  best_time
 end
 
 def clean_phone_number(phone_number)
@@ -79,6 +91,7 @@ template_letter = File.read('form_letter.erb')
 erb_template = ERB.new template_letter
 
 hour_array = []
+day_array = []
 contents.each do |row|
   id = row[0]
   name = row[:first_name]
@@ -86,10 +99,13 @@ contents.each do |row|
   legislators = legislators_by_zipcode(zipcode)
   phone_number = clean_phone_number(row[:homephone])
   registration_hour = hour_from_registration_date(row[:regdate])
+  registration_day = day_from_registration_date(row[:regdate])
   form_letter = erb_template.result(binding)
 
   save_thank_you_letter(id,form_letter)
   hour_array.push(registration_hour)
+  day_array.push(registration_day)
 end
 
-best_hour_for_ads(hour_array)
+puts "Best hour to run adds: #{best_time_for_ads(hour_array).join(', ')}h."
+puts "Best days to run adds: #{wday_name_from_number(best_time_for_ads(day_array)).join(', ')}."

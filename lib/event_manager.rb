@@ -27,9 +27,26 @@ def hour_from_registration_date(date)
   hour = Time.parse(date_array[1]).hour
 end
 
+def best_hour_for_ads(hour_array)
+  overview = Hash.new(0)
+  hour_array.each do |hour|
+    overview[hour] += 1
+  end
+  best_hour = []
+  same_hour_array = []
+  overview.each_value do |number|
+    same_hour_array.push(number)
+  end
+  while overview.key(same_hour_array.max)
+    best_hour.push(overview.key(same_hour_array.max))
+    overview.delete(overview.key(same_hour_array.max))
+  end
+  puts "Best hours for running-ads : #{best_hour.join(', ')}h."
+end
+
 def clean_phone_number(phone_number)
   phone_number.gsub!(/[^0-9]/, '')
-  
+
   if phone_number.length < 10 ||
      phone_number.length > 11 ||
      (phone_number.length == 11 && !phone_number.match?('1', 0))
@@ -61,8 +78,7 @@ contents = CSV.open(
 template_letter = File.read('form_letter.erb')
 erb_template = ERB.new template_letter
 
-best_hour = []
-
+hour_array = []
 contents.each do |row|
   id = row[0]
   name = row[:first_name]
@@ -70,13 +86,10 @@ contents.each do |row|
   legislators = legislators_by_zipcode(zipcode)
   phone_number = clean_phone_number(row[:homephone])
   registration_hour = hour_from_registration_date(row[:regdate])
-  best_hour.push(registration_hour)
   form_letter = erb_template.result(binding)
 
   save_thank_you_letter(id,form_letter)
+  hour_array.push(registration_hour)
 end
-overview = Hash.new(0)
-best_hour.each do |hour|
-  overview[hour] += 1
-end
-p overview
+
+best_hour_for_ads(hour_array)

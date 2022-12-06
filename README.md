@@ -1,0 +1,1 @@
+This is my attempt at the Ruby Event Manager Project from TOP's Ruby course.
